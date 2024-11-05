@@ -1,0 +1,8 @@
+int alice;
+while (alice) {
+}
+
+while (pepe)
+    int x;
+
+int bob;

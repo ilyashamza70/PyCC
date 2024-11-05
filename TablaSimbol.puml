@@ -1,0 +1,58 @@
+@startuml TablaSimbolos
+
+skinparam ClassAttributeIconSize 0
+hide circle
+
+class TablaSimbolos <<Singleton>> {
+    - List<Contexto> contextos
+    + addContexto() : void
+    + delContexto() : void
+    + addIdentificador(String nombre, TipoDato tdato, boolean esFuncion, List<TipoDato> args) : void
+    + buscarLocal(String nombre) : ID
+    + buscarGlobal(String nombre) : ID
+    + verificarUsados() : List<ID>
+}
+
+class Contexto {
+    - Map<String, ID> simbolos
+    + getId(String nombre) : ID
+    + addId(ID id) : void
+}
+
+abstract class ID <<abstract>> {
+    - String nombre
+    - TipoDato tdato
+    - Boolean inicializado
+    - Boolean usado
+    + setInicializado() : void
+    + setUsado() : void
+    + esInicializado() : Boolean
+    + esUsado() : Boolean
+}
+
+enum TipoDato <<enum>> {
+    VOID
+    BOOL
+    CHAR
+    INT
+    DOUBLE            
+}
+
+class Variable {
+    + Variable(String nombre, TipoDato tdato)
+}
+
+class Funcion {
+    - List<TipoDato> args
+    + Funcion(String nombre, TipoDato tdato, List<TipoDato> args)
+    + getArgs() : List<TipoDato>
+}
+
+TablaSimbolos --> Contexto
+Contexto --> ID
+ID <|-- Variable
+ID <|-- Funcion
+TipoDato <- ID
+Contexto --> TipoDato
+
+@enduml

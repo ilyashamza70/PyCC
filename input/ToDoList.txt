@@ -1,0 +1,20 @@
+Lista dei Primi 4 Punti da Fare
+Ecco i primi quattro compiti per iniziare e mostrare progressi al professore:
+
+Implementare il Riconoscimento dei Blocchi di Codice:
+
+Usare il parser per identificare blocchi delimitati da { }, controllando che ogni apertura abbia una chiusura corrispondente.
+Scrivere una funzione per il controllo del bilanciamento di {}, [] e ().
+Verificare la Struttura delle Istruzioni:
+
+Implementare un controllo per assicurarsi che tutte le istruzioni terminino con ; e che le operazioni logiche e aritmetiche siano correttamente formattate.
+Scrivere un parser rule per verificare questa struttura, segnando errori dove necessario.
+Costruire la Tabella dei Simboli:
+
+Creare una classe per rappresentare la tabella dei simboli, dove salverai nomi, tipi e scope delle variabili e delle funzioni.
+Usare ANTLR listener/visitor per popolare la tabella dei simboli durante il parsing.
+Rilevare Variabili e Funzioni Non Usate:
+
+Analizzare le dichiarazioni e le chiamate per identificare simboli non utilizzati.
+Aggiungere un controllo per stampare avvisi di variabili e funzioni dichiarate ma non usate.
+Dopo aver completato questi primi quattro punti, possiamo verificare insieme la loro implementazione.

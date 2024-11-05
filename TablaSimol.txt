@@ -1,0 +1,32 @@
+Attributo args in Funcion:
+
+Modificato per supportare la gestione di parametri. Ora args è un List<TipoDato>, che consente di specificare i tipi di argomenti per ogni funzione. Questo permetterà di fare controlli sui parametri durante l'analisi semantica.
+Metodi esInicializado() e esUsado() in ID:
+
+Aggiunti per verificare facilmente lo stato di una variabile o funzione, permettendo controlli sull'uso di variabili/funzioni non utilizzate.
+Metodo verificarUsados() in TablaSimbolos:
+
+Aggiunto per ottenere una lista di tutte le variabili e funzioni dichiarate ma mai utilizzate. Questo metodo è utile per generare avvisi nel report.
+Metodo addIdentificador() in TablaSimbolos:
+
+Modificato per accettare parametri aggiuntivi (esFuncion e args). Questo permette di aggiungere identificatori sia per variabili che per funzioni in un solo metodo, semplificando l'interfaccia della classe.
+Supporto per Scopi Annidati:
+
+La classe TablaSimbolos gestisce i contesti tramite una lista di Contexto, rendendo possibile mantenere separati gli scope (ad esempio, per blocchi if, for, while, ecc.). Questo è fondamentale per evitare conflitti di nomi tra variabili in scope diversi.
+Tipi Aggiuntivi in TipoDato (Opzionale):
+
+Possiamo ampliare TipoDato per includere tipi come FLOAT, BOOLEAN, ecc., se necessario per il linguaggio.
+Modifiche Codice e Passaggi Successivi
+Per integrare queste modifiche nel codice, potremmo seguire questi passaggi:
+
+Aggiornamento delle Classi TablaSimbolos, Contexto, ID e Sottoclassi:
+
+Implementare i nuovi metodi (verificarUsados, esInicializado, esUsado, addIdentificador).
+Assicurarsi che TablaSimbolos gestisca correttamente i Contexto per mantenere la separazione degli scope.
+Uso del Listener/Visitor:
+
+Estendere il listener o visitor ANTLR per popolare TablaSimbolos con variabili e funzioni trovate nel codice sorgente, chiamando addIdentificador ogni volta che si incontra una dichiarazione.
+Aggiornare l'uso o l'inizializzazione delle variabili tramite setInicializado e setUsado quando una variabile viene usata o inizializzata.
+Verifica delle Variabili/Funzioni Inutilizzate:
+
+Alla fine dell’analisi, chiamare verificarUsados() per generare un rapporto di tutte le variabili/funzioni dichiarate ma non utilizzate.
