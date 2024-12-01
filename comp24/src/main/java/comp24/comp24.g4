@@ -4,16 +4,28 @@ grammar comp24;
 package comp24;
 }
 
+// =========================
+//  Token Definitions
+// =========================
+
+// Fragment definitions for letters and digits
 fragment LETRA : [A-Za-z] ;
 fragment DIGITO : [0-9] ;
 
+// Reserved keywords
 FOR   : 'for' ;
 WHILE : 'while' ;
+IF    : 'if' ;
+ELSE  : 'else' ;
+
+// Data types
 INT   : 'int' ;
 DOUBLE : 'double' ;
 CHAR  : 'char' ;
-VOID  : 'void' ; 
+VOID  : 'void' ;
 BOOL  : 'bool' ;
+
+// Operators and symbols
 COMA  : ',' ;
 PYC   : ';' ;
 PA    : '(' ;
@@ -26,88 +38,129 @@ RESTA : '-' ;
 MULT  : '*' ;
 DIV   : '/' ;
 MOD   : '%' ;
-IGUAL : '==' ;
 
-// LINEA : (LETRA | DIGITO | [ {}()=;+*])*'\n' ;
+// Relational operators
+IGUAL : '==' ;
+NEQ   : '!=' ;
+GT    : '>' ;
+LT    : '<' ;
+GTE   : '>=' ;
+LTE   : '<=' ;
+
+// Logical operators
+AND   : '&&' ;
+OR    : '||' ;
+
+// Identifiers and numbers
 ID : (LETRA | '_')(LETRA | DIGITO | '_')* ;
 NUMERO : DIGITO+ ;
 
-WS : [ \t\n\r] -> skip ;
+// Whitespace (ignored)
+WS : [ \t\n\r]+ -> skip ;
 
+// Catch-all for unexpected tokens
 OTRO : . ;
 
+// =========================
+//  Grammar Rules
+// =========================
 
-// s : ID { System.out.println("ID ->" + $ID.getText() + "<--"); } s
-//   | NUMERO { System.out.println("NUMERO ->" + $NUMERO.getText() + "<--"); } s
-//   | FOR { System.out.println("FOR ->" + $FOR.getText() + "<--"); } s
-//   | WHILE { System.out.println("WHILE ->" + $WHILE.getText() + "<--"); } s
-//   | OTRO { System.out.println("Otro ->" + $OTRO.getText() + "<--"); } s
-//   | EOF
-//   ;
+// Program entry point: a program consists of multiple instructions or functions
+programa : (instruccion |  funcion)* EOF ;
 
-// si : s EOF ;
+// Function definitions
+declara_func : tdato ID PA parametros PC ;
 
-// s : PA s PC s
-//   |
-//   ;
+funcion : tdato ID PA parametros PC bloque ;
+parametros : parametro (COMA parametro)* 
+            |   /* Empty */;
+parametro : tdato ID ;
 
-programa : instrucciones EOF ;
+// Instruction blocks
 
-instrucciones : instruccion instrucciones
-              |
-              ;
+inst_while : WHILE PA comparacion PC bloque ;
+instruccion_if : IF PA comparacion PC bloque (ELSE bloque)? ;
 
-// instruccion : LINEA { System.out.println("LINEA ->" + $LINEA.getText() + "<--"); } ;
 
-instruccion : declaracion
-            | asignacion PYC
-            | iwhile
-            | bloque
-            ;
 
-bloque : LLA instrucciones LLC ;
+bloque : LLA (instruccion)* LLC ;
 
-declaracion : tdato ID inic lvars PYC ;
+// Instructions
+instruccion :
+      declaracion
+    | asignacion PYC
+    | condicional
+    | bucle
+    | llamada_func
+    | return 
+    | instruccion_else;
 
-tdato : INT
-      | DOUBLE
-      | CHAR
-      | VOID
-        BOOL
-      ;
+instrucciones
+    : (instruccion)+
+    ;
 
-inic : ASIG opal
-     |
-     ;
+// Variable declaration
+declaracion : tdato ID (ASIG opal)? (COMA ID (ASIG opal)?)* PYC ;
 
-lvars : COMA ID inic lvars
-      |
-      ;
+// Data types
+tdato : INT | DOUBLE | CHAR | VOID | BOOL ;
 
+// Assignment statements
 asignacion : ID ASIG opal ;
 
-iwhile : WHILE PA opal PC instruccion;
+// Conditional statements
+condicional
+    : 'if' PA comparacion PC bloque else_opcional
+    ;
+// Added to avoid using ? 
+else_opcional
+    : 'else' bloque
+    | /* vuoto */
+    ;
 
+// Loop statements
+bucle : 
+      'while' PA comparacion PC bloque
+    | 'for' PA asignacion PYC comparacion PYC asignacion PC bloque ;
+
+// Function calls
+llamada_func
+    : ID PA lista_opal PC PYC
+    ;
+// Added to avoid using ?  and *
+
+lista_opal
+    : opal (COMA opal)*
+    | /* Empty */
+    ;
+
+// Return statements
+return : 'return' opal PYC ;
+// Else instrction
+instruccion_else : ELSE instruccion ;
+
+// =========================
+//  Expressions and Operators
+// =========================
+
+// General expressions
 opal : exp ;
 
-// a + b / (c + d)
-exp : term e ;
+// Arithmetic expressions
+exp : exp SUMA term
+    | exp RESTA term
+    | term ;
 
-e : SUMA  term e
-  | RESTA term e
-  |
-  ;
-
-term : factor t ;
-
-t : MULT factor t
-  | DIV  factor t
-  | MOD  factor t
-  |
-  ;
+term : term MULT factor
+     | term DIV factor
+     | term MOD factor
+     | factor ;
 
 factor : NUMERO
        | ID
-       | PA exp PC
-       ;
+       | PA exp PC ;
 
+// Comparisons
+comparacion : opal logic opal ;
+
+logic : IGUAL | NEQ | GT | LT | GTE | LTE ;

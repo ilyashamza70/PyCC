@@ -1,6 +1,9 @@
 package comp24;
 
 import org.antlr.v4.runtime.tree.ParseTree;
+
+import comp24.Simbolos.*;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -25,6 +28,7 @@ public class App {
         // create a parser that feeds off the tokens buffer
         comp24Parser parser = new comp24Parser(tokens);
                 
+
         // create Listener
         comp24BaseListener escucha = new Escucha();
 
@@ -35,10 +39,15 @@ public class App {
         // En este caso la regla es el simbolo inicial
         //parser.programa();
         ParseTree tree = parser.programa();
+        
         // Conectamos el visitor
         Walker visitor = new Walker();
         visitor.visit(tree);
 
+        visitor.imprimirCodigoIntermedio();
+
+        // Salva il codice intermedio su un file
+        visitor.guardarCodigoIntermedio("CodigoIntermedio.txt");
         //System.out.println(tree.toStringTree(parser));
 
         // System.out.println(visitor);
