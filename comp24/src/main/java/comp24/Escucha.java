@@ -228,6 +228,8 @@ public void exitDeclaracion(DeclaracionContext ctx) {
                 System.err.println("\tError: Missing operands in comparison.");
             }
         }
+        System.out.println("\tAnalyzing comparison: " + ctx.getText());
+
     }
     
     // Metodo di utilità per verificare se una stringa è un numero

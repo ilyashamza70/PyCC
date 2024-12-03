@@ -109,9 +109,8 @@ tdato : INT | DOUBLE | CHAR | VOID | BOOL ;
 asignacion : ID ASIG opal ;
 
 // Conditional statements
-condicional
-    : 'if' PA comparacion PC bloque else_opcional
-    ;
+condicional : IF PA comparacion PC bloque (ELSE bloque)? ;
+
 // Added to avoid using ? 
 else_opcional
     : 'else' bloque
@@ -163,4 +162,4 @@ factor : NUMERO
 // Comparisons
 comparacion : opal logic opal ;
 
-logic : IGUAL | NEQ | GT | LT | GTE | LTE ;
+    logic : IGUAL | NEQ | GT | LT | GTE | LTE ;

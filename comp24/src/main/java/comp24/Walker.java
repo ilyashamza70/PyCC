@@ -21,7 +21,11 @@ public class Walker extends comp24BaseVisitor<String> {
 
     private CodigoIntermedio codigoIntermedio = new CodigoIntermedio();
     private TablaSimbolos tablaSimbolos = TablaSimbolos.getInstance();
+    private int tempVarCount = 0;
 
+    private String newTempVar() {
+        return "t" + (tempVarCount++);
+    }
     @Override
     public String visitDeclara_func(Declara_funcContext ctx) {
         String funcName = ctx.ID().getText();
@@ -65,28 +69,38 @@ public class Walker extends comp24BaseVisitor<String> {
 
     @Override
     public String visitInst_while(Inst_whileContext ctx) {
+        String startLabel = newTempVar();
+        String endLabel = newTempVar();
+
         // Generate intermediate code for while loop
-        codigoIntermedio.agregarInstruccion("WHILE " + ctx.comparacion().getText() + " DO");
-        visitChildren(ctx);
-        // Generate intermediate code for end of while loop
-        codigoIntermedio.agregarInstruccion("END WHILE");
+        codigoIntermedio.agregarInstruccion(startLabel + ":");
+        String condition = visit(ctx.comparacion());
+        codigoIntermedio.agregarInstruccion("IF " + condition + " GOTO " + endLabel);
+        visit(ctx.bloque());
+        codigoIntermedio.agregarInstruccion("GOTO " + startLabel);
+        codigoIntermedio.agregarInstruccion(endLabel + ":");
         return null;
     }
 
     @Override
     public String visitInstruccion_if(Instruccion_ifContext ctx) {
+        String elseLabel = newTempVar();
+        String endLabel = newTempVar();
+
         // Generate intermediate code for if statement
-        codigoIntermedio.agregarInstruccion("IF " + ctx.comparacion().getText() + " THEN");
+        String condition = visit(ctx.comparacion());
+        codigoIntermedio.agregarInstruccion("IF " + condition + " GOTO " + elseLabel);
         visit(ctx.bloque(0)); // Visit the 'if' block
+        codigoIntermedio.agregarInstruccion("GOTO " + endLabel);
+        codigoIntermedio.agregarInstruccion(elseLabel + ":");
 
         // Check if there is an 'else' block
         if (ctx.ELSE() != null) {
-            codigoIntermedio.agregarInstruccion("ELSE");
             visit(ctx.bloque(1)); // Visit the 'else' block
         }
 
         // Generate intermediate code for end of if statement
-        codigoIntermedio.agregarInstruccion("END IF");
+        codigoIntermedio.agregarInstruccion(endLabel + ":");
         return null;
     }
 
@@ -232,7 +246,7 @@ public String visitLlamada_func(Llamada_funcContext ctx) {
     }
 
     public void guardarCodigoIntermedio(String fileName) {
-        codigoIntermedio.guardarCodigoIntermedio(fileName);
+            codigoIntermedio.guardarCodigoIntermedio(fileName);
     }
 
     // Metodo di utilità per verificare se una stringa è un numero
