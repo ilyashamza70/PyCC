@@ -1,0 +1,28 @@
+int v
+double m = 12
+FUNC miao BEGIN
+FUNC miao END
+t0 = m + 2
+m = t0
+t1 = 2 + m
+t2 = t1 + 3
+m = t2
+FUNC main BEGIN
+int a = 5
+int b = 3
+L0:
+IF a > 0 GOTO L1
+t3 = a - 1
+a = t3
+GOTO L0
+L1:
+IF a < b GOTO L2
+t4 = b
+a = t4
+GOTO L3
+L2:
+t5 = 0
+a = t5
+L3:
+RETURN a
+FUNC main END

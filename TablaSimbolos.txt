@@ -3,6 +3,7 @@ Tabla de Simbolos:
 | Tipo       | Nombre     | Tipo Dato  | ValoreInicial | Usado      |
 --------------------------------------------------------------------
 | Variable   | a          | INT        | 5             | Si         |
+| Variable   | b          | INT        | 3             | No         |
 | Variable   | v          | INT        | null          | No         |
 | Funcion    | miao       | DOUBLE     | N/A           | No         |
 | Funcion    | main       | INT        | N/A           | No         |

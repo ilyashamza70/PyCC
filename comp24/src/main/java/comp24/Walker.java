@@ -6,7 +6,9 @@ import comp24.comp24Parser.Inst_whileContext;
 import comp24.comp24Parser.Instruccion_ifContext;
 import comp24.comp24Parser.DeclaracionContext;
 import comp24.comp24Parser.AsignacionContext;
+import comp24.comp24Parser.BucleContext;
 import comp24.comp24Parser.ComparacionContext;
+import comp24.comp24Parser.CondicionalContext;
 import comp24.comp24Parser.Llamada_funcContext;
 import comp24.comp24Parser.ReturnContext;
 import comp24.comp24Parser.ParametroContext;
@@ -22,10 +24,16 @@ public class Walker extends comp24BaseVisitor<String> {
     private CodigoIntermedio codigoIntermedio = new CodigoIntermedio();
     private TablaSimbolos tablaSimbolos = TablaSimbolos.getInstance();
     private int tempVarCount = 0;
+    private int labelCount = 0;
 
     private String newTempVar() {
         return "t" + (tempVarCount++);
     }
+
+    private String newLabel() {
+        return "L" + (labelCount++);
+    }
+
     @Override
     public String visitDeclara_func(Declara_funcContext ctx) {
         String funcName = ctx.ID().getText();
@@ -56,7 +64,7 @@ public class Walker extends comp24BaseVisitor<String> {
 
         // Register function in the symbol table
         if (!tablaSimbolos.agregarSimbolo(funcName, returnType, true, args)) {
-            System.err.println("\tError: Function '" + funcName + "' already declared.");
+            //System.err.println("\tError: Function '" + funcName + "' already declared.");
         }
 
         // Generate intermediate code for function definition
@@ -66,43 +74,51 @@ public class Walker extends comp24BaseVisitor<String> {
         codigoIntermedio.agregarInstruccion("FUNC " + funcName + " END");
         return null;
     }
-
+    
     @Override
-    public String visitInst_while(Inst_whileContext ctx) {
-        String startLabel = newTempVar();
-        String endLabel = newTempVar();
-
+    public String visitBucle(BucleContext ctx) {
+        String startLabel = newLabel();
+        String endLabel = newLabel();
+    
         // Generate intermediate code for while loop
         codigoIntermedio.agregarInstruccion(startLabel + ":");
         String condition = visit(ctx.comparacion());
+        if (condition == null) {
+            condition = "false";
+        }
         codigoIntermedio.agregarInstruccion("IF " + condition + " GOTO " + endLabel);
         visit(ctx.bloque());
         codigoIntermedio.agregarInstruccion("GOTO " + startLabel);
         codigoIntermedio.agregarInstruccion(endLabel + ":");
         return null;
     }
-
+    
     @Override
-    public String visitInstruccion_if(Instruccion_ifContext ctx) {
-        String elseLabel = newTempVar();
-        String endLabel = newTempVar();
-
+    public String visitCondicional(CondicionalContext ctx) {
+        String elseLabel = newLabel();
+        String endLabel = newLabel();
+    
         // Generate intermediate code for if statement
         String condition = visit(ctx.comparacion());
         codigoIntermedio.agregarInstruccion("IF " + condition + " GOTO " + elseLabel);
-        visit(ctx.bloque(0)); // Visit the 'if' block
-        codigoIntermedio.agregarInstruccion("GOTO " + endLabel);
-        codigoIntermedio.agregarInstruccion(elseLabel + ":");
-
+        visit(ctx.bloque()); // Visit the 'if' block
+    
         // Check if there is an 'else' block
-        if (ctx.ELSE() != null) {
-            visit(ctx.bloque(1)); // Visit the 'else' block
+        if (ctx.else_opcional() != null) {
+            codigoIntermedio.agregarInstruccion("GOTO " + endLabel);
+            codigoIntermedio.agregarInstruccion(elseLabel + ":");
+            visit(ctx.else_opcional().bloque()); // Visit the 'else' block
+            codigoIntermedio.agregarInstruccion(endLabel + ":");
+        } else {
+            codigoIntermedio.agregarInstruccion(elseLabel + ":");
         }
-
-        // Generate intermediate code for end of if statement
-        codigoIntermedio.agregarInstruccion(endLabel + ":");
+    
         return null;
     }
+
+  
+
+
 
     @Override
     public String visitDeclaracion(DeclaracionContext ctx) {
@@ -120,7 +136,7 @@ public class Walker extends comp24BaseVisitor<String> {
 
                 // Check if variable is already declared
                 if (tablaSimbolos.existeSimbolo(varName)) {
-                    System.err.println("\tError: Variable '" + varName + "' already declared.");
+                   // System.err.println("\tError: Variable '" + varName + "' already declared.");
                 } else {
                     // Register variable in the symbol table
                     boolean success = tablaSimbolos.agregarSimbolo(varName, varType,false,null);
@@ -149,13 +165,47 @@ public class Walker extends comp24BaseVisitor<String> {
         return visitChildren(ctx);
     }
 
+
+    @Override
+    public String visitComparacion(comp24Parser.ComparacionContext ctx) {
+        // Verifica che ctx.opal(0) e ctx.opal(1) esistano
+        if (ctx.opal(0) != null && ctx.opal(1) != null) {
+            String leftOperand = visit(ctx.opal(0));
+            String rightOperand = visit(ctx.opal(1));
+            String operator = ctx.logic().getText();
+    
+            // Validate the left operand
+            if (leftOperand == null || (!isNumber(leftOperand) && !tablaSimbolos.existeSimbolo(leftOperand))) {
+                System.err.println("\tError: Variable '" + leftOperand + "' not declared.");
+            }
+    
+            // Validate the right operand
+            if (rightOperand == null || (!isNumber(rightOperand) && !tablaSimbolos.existeSimbolo(rightOperand))) {
+                System.err.println("\tError: Variable '" + rightOperand + "' not declared.");
+            }
+    
+            return leftOperand + " " + operator + " " + rightOperand;
+        } else {
+            System.err.println("\tError: Missing operands in comparison.");
+        }
+        return null;
+    }
+
+    @Override
+    public String visitOpal(comp24Parser.OpalContext ctx) {
+        if (ctx.exp() != null) {
+            return visit(ctx.exp());
+        }
+        return null;
+    }
+
     @Override
     public String visitAsignacion(AsignacionContext ctx) {
         // Verifica che ctx.ID() esista
         if (ctx.ID() != null && ctx.opal() != null) {
             String varName = ctx.ID().getText();
-            String value = ctx.opal().getText();
-
+            String value = visit(ctx.opal());
+    
             // Check if variable is declared
             if (!tablaSimbolos.existeSimbolo(varName)) {
                 System.err.println("\tError: Variable '" + varName + "' not declared.");
@@ -164,76 +214,99 @@ public class Walker extends comp24BaseVisitor<String> {
                 Variable var = (Variable) tablaSimbolos.buscarGlobal(varName);
                 var.setUsado(true);
                 var.setValor(value);
-
+    
                 // Check if the variable has an initial value, if not, set it
                 if (var.getValorInicial() == null) {
                     var.setValorInicial(value);
                 }
-
+    
                 // Generate intermediate code for assignment
-                codigoIntermedio.agregarInstruccion(varName + " = " + value);
+                if (value.startsWith("t")) {
+                    // If the value is a temporary variable, use it directly
+                    codigoIntermedio.agregarInstruccion(varName + " = " + value);
+                } else {
+                    // Otherwise, generate a temporary variable
+                    String tempVar = newTempVar();
+                    codigoIntermedio.agregarInstruccion(tempVar + " = " + value);
+                    codigoIntermedio.agregarInstruccion(varName + " = " + tempVar);
+                }
             }
         } else {
             System.err.println("\tError: Missing variable name or value in assignment.");
         }
-        return visitChildren(ctx);
-    }
-
-    @Override
-    public String visitComparacion(ComparacionContext ctx) {
-        // Verifica che ctx.opal(0) e ctx.opal(1) esistano
-        if (ctx.opal(0) != null && ctx.opal(1) != null) {
-            String leftOperand = ctx.opal(0).getText();
-            String rightOperand = ctx.opal(1).getText();
-
-            // Validate the left operand
-            if (!isNumber(leftOperand) && !tablaSimbolos.existeSimbolo(leftOperand)) {
-                System.err.println("\tError: Variable '" + leftOperand + "' not declared.");
-            }
-
-            // Validate the right operand
-            if (!isNumber(rightOperand) && !tablaSimbolos.existeSimbolo(rightOperand)) {
-                System.err.println("\tError: Variable '" + rightOperand + "' not declared.");
-            }
-        } else {
-            // Controlla se il contesto padre è una dichiarazione o un'assegnazione
-            ParserRuleContext parentCtx = ctx.getParent();
-            if (parentCtx instanceof comp24Parser.DeclaracionContext || parentCtx instanceof comp24Parser.AsignacionContext) {
-                // Non fare nulla, è una dichiarazione o un'assegnazione
-            } else {
-                System.err.println("\tError: Missing operands in comparison.");
-            }
-        }
-        return visitChildren(ctx);
-    }
-
- @Override
-public String visitLlamada_func(Llamada_funcContext ctx) {
-    String funcName = ctx.ID().getText();
-    ID funcion = tablaSimbolos.buscarGlobal(funcName);
-    if (funcion == null || !(funcion instanceof Funcion)) {
-        System.err.println("\tError: Function '" + funcName + "' not declared.");
         return null;
     }
 
-    Funcion func = (Funcion) funcion;
-    List<TipoDato> expectedArgs = func.getArgs();
-    List<String> providedArgs = new ArrayList<>();
-    
-
-    if (expectedArgs.size() != providedArgs.size()) {
-        System.err.println("\tError: Function '" + funcName + "' called with incorrect number of arguments.");
+    @Override
+    public String visitExp(comp24Parser.ExpContext ctx) {
+        if (ctx.term() != null && ctx.exp() == null) {
+            return visit(ctx.term());
+        } else if (ctx.SUMA() != null || ctx.RESTA() != null) {
+            String left = visit(ctx.exp());
+            String right = visit(ctx.term());
+            String operator = ctx.SUMA() != null ? "+" : "-";
+            String tempVar = newTempVar();
+            codigoIntermedio.agregarInstruccion(tempVar + " = " + left + " " + operator + " " + right);
+            return tempVar;
+        }
+        return null;
     }
 
-    // Generate intermediate code for function call
-    codigoIntermedio.agregarInstruccion("CALL " + funcName + " " + providedArgs.toString());
-    return visitChildren(ctx);
-}
+    @Override
+    public String visitTerm(comp24Parser.TermContext ctx) {
+        if (ctx.factor() != null && ctx.term() == null) {
+            return visit(ctx.factor());
+        } else if (ctx.MULT() != null || ctx.DIV() != null || ctx.MOD() != null) {
+            String left = visit(ctx.term());
+            String right = visit(ctx.factor());
+            String operator = ctx.MULT() != null ? "*" : ctx.DIV() != null ? "/" : "%";
+            String tempVar = newTempVar();
+            codigoIntermedio.agregarInstruccion(tempVar + " = " + left + " " + operator + " " + right);
+            return tempVar;
+        }
+        return null;
+    }
+
+    @Override
+    public String visitFactor(comp24Parser.FactorContext ctx) {
+        if (ctx.NUMERO() != null) {
+            return ctx.NUMERO().getText();
+        } else if (ctx.ID() != null) {
+            return ctx.ID().getText();
+        } else if (ctx.PA() != null && ctx.exp() != null && ctx.PC() != null) {
+            return visit(ctx.exp());
+        }
+        return null;
+    }
+
+
+    @Override
+    public String visitLlamada_func(Llamada_funcContext ctx) {
+        String funcName = ctx.ID().getText();
+        ID funcion = tablaSimbolos.buscarGlobal(funcName);
+        if (funcion == null || !(funcion instanceof Funcion)) {
+            System.err.println("\tError: Function '" + funcName + "' not declared.");
+            return null;
+        }
+
+        Funcion func = (Funcion) funcion;
+        List<TipoDato> expectedArgs = func.getArgs();
+        List<String> providedArgs = new ArrayList<>();
+        
+
+        if (expectedArgs.size() != providedArgs.size()) {
+            System.err.println("\tError: Function '" + funcName + "' called with incorrect number of arguments.");
+        }
+
+        // Generate intermediate code for function call
+        codigoIntermedio.agregarInstruccion("CALL " + funcName + " " + providedArgs.toString());
+        return visitChildren(ctx);
+    }
 
     @Override
     public String visitReturn(ReturnContext ctx) {
         if (ctx.opal() != null && !tablaSimbolos.existeSimbolo(ctx.opal().getText())) {
-            System.err.println("\tError: Variable '" + ctx.opal().getText() + "' not declared.");
+            //System.err.println("\tError: Variable '" + ctx.opal().getText() + "' not declared.");
         }
 
         // Generate intermediate code for return statement
@@ -251,6 +324,9 @@ public String visitLlamada_func(Llamada_funcContext ctx) {
 
     // Metodo di utilità per verificare se una stringa è un numero
     private boolean isNumber(String str) {
+        if (str == null) {
+            return false;
+        }
         try {
             Double.parseDouble(str);
             return true;

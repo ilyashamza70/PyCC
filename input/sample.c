@@ -7,16 +7,21 @@ double miao(int x){}
 m = m + 2;
 
 m= (2+m) + 3;
+
 int main() {
-    int a;
-    a = 5;
+    int a = 5;
+    int b = 3;
     
     while (a > 0) {
         a = a - 1;
     }
-    if(a < 0){
+
+    if(a < b){
+
+        a = b;
+    }else{
         a = 0;
     }
     
-    return 0;
+    return a;
 }

@@ -301,6 +301,38 @@ public void exitDeclaracion(DeclaracionContext ctx) {
             }
         }
     }
+    @Override
+    public void enterBucle(comp24Parser.BucleContext ctx) {
+        System.out.println("\tAnalyzing loop: " + ctx.getText());
+    
+
+    }
+    
+    @Override
+    public void exitBucle(comp24Parser.BucleContext ctx) {
+        // Check if condition is valid
+        if (ctx.WHILE() != null && ctx.comparacion() == null) {
+            System.err.println("\tError: 'while' loop condition missing or invalid.");
+        } else if (ctx.FOR() != null && (ctx.comparacion() == null || ctx.asignacion().size() != 2)) {
+            System.err.println("\tError: 'for' loop condition or assignments missing or invalid.");
+        }
+        System.out.println("\tFinished analyzing loop: " + ctx.getText());
+    }
+
+    @Override
+    public void enterCondicional(comp24Parser.CondicionalContext ctx) {
+        System.out.println("\tAnalyzing 'if' statement: " + ctx.getText());
+
+        // Check if condition is valid
+        if (ctx.comparacion() == null) {
+            System.err.println("\tError: 'if' condition missing or invalid.");
+        }
+    }
+
+    @Override
+    public void exitCondicional(comp24Parser.CondicionalContext ctx) {
+        System.out.println("\tFinished analyzing 'if' statement: " + ctx.getText());
+    }
 
     /**
      * Handles return statements.
