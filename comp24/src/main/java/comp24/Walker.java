@@ -95,23 +95,22 @@ public class Walker extends comp24BaseVisitor<String> {
     
     @Override
     public String visitCondicional(CondicionalContext ctx) {
-        String elseLabel = newLabel();
+        String trueLabel = newLabel();
         String endLabel = newLabel();
     
         // Generate intermediate code for if statement
         String condition = visit(ctx.comparacion());
-        codigoIntermedio.agregarInstruccion("IF " + condition + " GOTO " + elseLabel);
-        visit(ctx.bloque()); // Visit the 'if' block
-    
+        codigoIntermedio.agregarInstruccion("IF " + condition + " GOTO " + trueLabel);
+        
         // Check if there is an 'else' block
         if (ctx.else_opcional() != null) {
-            codigoIntermedio.agregarInstruccion("GOTO " + endLabel);
-            codigoIntermedio.agregarInstruccion(elseLabel + ":");
             visit(ctx.else_opcional().bloque()); // Visit the 'else' block
-            codigoIntermedio.agregarInstruccion(endLabel + ":");
-        } else {
-            codigoIntermedio.agregarInstruccion(elseLabel + ":");
+            codigoIntermedio.agregarInstruccion("GOTO " + endLabel);
         }
+        
+        codigoIntermedio.agregarInstruccion(trueLabel + ":");
+        visit(ctx.bloque()); // Visit the 'if' block
+        codigoIntermedio.agregarInstruccion(endLabel + ":");
     
         return null;
     }

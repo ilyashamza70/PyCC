@@ -17,11 +17,11 @@ a = t3
 GOTO L0
 L1:
 IF a < b GOTO L2
-t4 = b
+t4 = 0
 a = t4
 GOTO L3
 L2:
-t5 = 0
+t5 = b
 a = t5
 L3:
 RETURN a
